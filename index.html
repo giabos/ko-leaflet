@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.js"></script>
+        <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css">
+        <script src="//cdnjs.cloudflare.com/ajax/libs/knockout/3.3.0/knockout-min.js"></script>
+        <script src="//rawgithub.com/jseppi/Leaflet.MakiMarkers/master/Leaflet.MakiMarkers.js"></script>
+        
+        <style> 
+            .map {
+                height:300px;
+                width: 100%;
+                border: 2px solid orange;
+            }
+            
+            .icon {
+                background-color: red;
+            }
+        </style>
+            
+        
+    </head>
+    <body>
+        <h2>map features</h2>
+        <label>lat</label>
+        <input data-bind="value: center[0]" size="5">
+        <label>lng</label>
+        <input data-bind="value: center[1]" size="5">
+        <label>zoom</label>
+        <input data-bind="value: zoom" size="3">
+        <hr>
+        <h2>markers</h2>
+        <button data-bind="click: addMarker">add</button>
+        <button data-bind="click: removeMarker">remove</button>
+        <ul data-bind="foreach: markers">
+            <li>
+                <label>lat</label>
+                <input data-bind="value: center[0]" size="5">
+                <label>lng</label>
+                <input data-bind="value: center[1]" size="5">
+                <label>title</label>
+                <input data-bind="value: title" size="5">
+            </li>
+        </ul>
+        <hr>
+        <div data-bind="leafletMap: center, zoom: zoom, markers: markers" class="map"></div>
+        <script src="ko-leaflet.js"></script>
+        <script src="test-app.js"></script>
+  </body>
+</html>
