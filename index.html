@@ -8,7 +8,7 @@
         
         <style> 
             .map {
-                height:300px;
+                height:600px;
                 width: 100%;
                 border: 2px solid orange;
             }
@@ -31,7 +31,6 @@
         <hr>
         <h2>markers</h2>
         <button data-bind="click: addMarker">add</button>
-        <button data-bind="click: removeMarker">remove</button>
         <ul data-bind="foreach: markers">
             <li>
                 <label>lat</label>
@@ -40,6 +39,7 @@
                 <input data-bind="value: center[1]" size="5">
                 <label>title</label>
                 <input data-bind="value: title" size="5">
+                <button data-bind="click: function() { $parent.removeMarker($index()) }">delete</button>
             </li>
         </ul>
         <hr>

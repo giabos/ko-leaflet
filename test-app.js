@@ -14,7 +14,7 @@ ko.applyBindings({
             color: 'red'
         });
     },
-    removeMarker: function() {
-        this.markers.splice(0, 1);
+    removeMarker: function(i) {
+        this.markers.splice(i, 1);
     }
 });
