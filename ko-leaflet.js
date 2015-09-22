@@ -30,23 +30,28 @@
             }
         }, null, { disposeWhenNodeIsRemoved: element });
         self.subscriptions.push(self.centerM);
+        
+        // Create marker in leaflet.
         self.marker = L.marker(ko.unwrap(self.centerM), {
-            title: ko.unwrap(m.title),
+            title: ko.unwrap(m.title || ''),
             draggable: ko.unwrap(m.draggable || false)
         });
         self.marker.addTo(map);
+        
         self.marker.on('dragend', function() {
             self.centerM(self.marker.getLatLng());
         });
+        
         self.subscriptions.push(self.centerM.subscribe(function() {
             self.marker.setLatLng(ko.unwrap(self.centerM));
         }));
-
-        //marker.setIcon(L.divIcon({className: 'icon'}));        
-
         self.subscriptions.push(m.title.subscribe(function() {
             self.marker.title = ko.unwrap(m.title);
         }));
+        
+        //marker.setIcon(L.divIcon({className: 'icon'}));        
+
+        
         this.map = map;
     };    
     
