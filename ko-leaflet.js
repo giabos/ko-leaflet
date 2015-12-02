@@ -26,7 +26,8 @@
         // Create marker in leaflet.
         self.marker = L.marker(ko.unwrap(self.centerM), {
             title: ko.unwrap(title || '----'),
-            draggable: ko.unwrap(m.draggable || false)
+            draggable: ko.unwrap(m.draggable || false),
+            opacity: m.opacity || 1.0
         });
         self.marker.addTo(map);
         self.marker.bindPopup(ko.unwrap(text));

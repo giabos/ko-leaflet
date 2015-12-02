@@ -4,7 +4,8 @@ ko.applyBindings({
     markers: ko.observableArray([{
         center: [ko.observable(50.81057), ko.observable(4.93622)],
         text: ko.observable("hello"),
-        draggable: true
+        draggable: true,
+        opacity: 0.4
     }]),
     addMarker: function() {
         this.markers.push({
