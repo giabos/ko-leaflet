@@ -1,24 +1,14 @@
 /* global ko, L, console */
 
 (function (ko, L) {
+    "use strict";
+    
     
     var each = ko.utils.arrayForEach;
     
-    function Subscriptions () {
-        this.list = [];    
-    }
-    Subscriptions.prototype.add = function (subscr) {
-        this.list.push(subscr);
-    };
-    
-    Subscriptions.prototype.dispose = function () {
-        each(this.list, function (subscr) { subscr.dispose()  });
-    };
-    
-    // 'm' contains following observables: center (array containing [lat, lng]), draggable, title.
-    var Marker = function(m, map, element) {
+    // 'm' contains following observables: center (array containing [lat, lng]), draggable, title, text
+    var Marker = function(m, map) {
         var self = this;
-        self.subscriptions = [];
         
         self.centerM = ko.computed({
             read: function() {
@@ -28,26 +18,38 @@
                 m.center[0](center.lat);
                 m.center[1](center.lng);
             }
-        }, null, { disposeWhenNodeIsRemoved: element });
-        self.subscriptions.push(self.centerM);
+        });
+        
+        var title = ko.isObservable(m.title) ? m.title : ko.observable(m.title);
+        var text = ko.isObservable(m.text) ? m.text : ko.observable(m.text);
         
         // Create marker in leaflet.
         self.marker = L.marker(ko.unwrap(self.centerM), {
-            title: ko.unwrap(m.title || ''),
+            title: ko.unwrap(title || '----'),
             draggable: ko.unwrap(m.draggable || false)
         });
         self.marker.addTo(map);
+        self.marker.bindPopup(ko.unwrap(text));
+        var popup = self.marker.getPopup()        
+
+        if (ko.unwrap(m.draggable || false)) {
+            self.marker.on('dragend', function() {
+                self.centerM(self.marker.getLatLng());
+            });
+        }
         
-        self.marker.on('dragend', function() {
-            self.centerM(self.marker.getLatLng());
-        });
-        
-        self.subscriptions.push(self.centerM.subscribe(function() {
-            self.marker.setLatLng(ko.unwrap(self.centerM));
-        }));
-        self.subscriptions.push(m.title.subscribe(function() {
-            self.marker.title = ko.unwrap(m.title);
-        }));
+        self.subscriptions = [
+            self.centerM.subscribe(function() {
+                self.marker.setLatLng(ko.unwrap(self.centerM));
+            }),
+            title.subscribe(function() {
+                self.marker.title = ko.unwrap(title);
+            }),
+            text.subscribe(function () {
+                popup.setContent(ko.unwrap(text));
+            })
+        ];
+        self.subscriptions.push(self.centerM);
         
         //marker.setIcon(L.divIcon({className: 'icon'}));        
 
@@ -57,7 +59,7 @@
     
     Marker.prototype.dispose = function () {
         // TODO (remove all events & subscriptions)
-        each(this.subscriptions, function (subscription) { subscription.dispose(); })
+        each(this.subscriptions, function (subscription) { subscription.dispose(); });
         this.map.removeLayer(this.marker);
     };
     
@@ -84,29 +86,32 @@
                 attribution: 'osm.org'
             }).addTo(map);
     
-            mapCenter.subscribe(function() {
-                map.setView(ko.unwrap(mapCenter));
-            });
+            var subscriptions = [
+                mapCenter.subscribe(function() {
+                    map.setView(ko.unwrap(mapCenter));
+                })
+            ];
             map.on('dragend', function() {
                 mapCenter(map.getCenter());
             });
     
     
             if (ko.isObservable(zoom)) {
-                zoom.subscribe(function() {
+                var subsc = zoom.subscribe(function() {
                     map.setZoom(ko.unwrap(zoom));
                 });
+                subscriptions.push(subsc);
                 map.on('zoomend', function () { zoom(map.getZoom()); });
             }
     
             var markersList = [];
-            each(ko.unwrap(markers), function (m, idx) { markersList.push(new Marker(m, map, element));  });
+            each(ko.unwrap(markers), function (m, idx) { markersList.push(new Marker(m, map));  });
     
             // http://stackoverflow.com/questions/14149551/subscribe-to-observable-array-for-new-or-removed-entry-only
-            markers.subscribe(function(changes) {
+            var subscr = markers.subscribe(function(changes) {
                 each(changes, function(c) {
                     if (c.status === "added") {
-                        markersList[c.index] = new Marker(c.value, map, element);
+                        markersList[c.index] = new Marker(c.value, map);
                     }
                     if (c.status === "deleted") {
                         markersList[c.index].dispose();
@@ -115,10 +120,12 @@
                 });
     
             }, this, "arrayChange");
+            subscriptions.push(subscr);
     
             ko.utils.domNodeDisposal.addDisposeCallback(element, function() {
                 // TODO: dispose all subscriptions & events.
                 each(markersList, function (m) { m.dispose();  });
+                each(subscriptions, function (subscription) { subscription.dispose(); });
             });
     
             
