@@ -1,7 +1,7 @@
 /* global ko, L, console */
 
 (function (ko, L) {
-    "use strict";
+    //"use strict";
     
     var each = ko.utils.arrayForEach;
     
