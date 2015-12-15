@@ -3,12 +3,13 @@
 (function (ko, L) {
     "use strict";
     
-    
     var each = ko.utils.arrayForEach;
     
     // 'm' contains following observables: center (array containing [lat, lng]), draggable, title, text
     var Marker = function(m, map) {
         var self = this;
+        
+        self.eventHandlers = []; // array of objects: target, eventName, handler
         
         self.centerM = ko.computed({
             read: function() {
@@ -34,7 +35,8 @@
         var popup = self.marker.getPopup()        
 
         if (ko.unwrap(m.draggable || false)) {
-            self.marker.on('dragend', function() {
+            self.marker.on('dragend', function(evt) {
+                self.eventHandlers.push({target: evt.target, eventName: evt.type, handler: arguments.callee});
                 self.centerM(self.marker.getLatLng());
             });
         }
@@ -59,18 +61,18 @@
     };    
     
     Marker.prototype.dispose = function () {
-        // TODO (remove all events & subscriptions)
+        // remove all events & subscriptions.
+        each (this.eventHandlers, function (eh) {  eh.target.removeEventListener(eh.eventName, eh.handler); });
         each(this.subscriptions, function (subscription) { subscription.dispose(); });
         this.map.removeLayer(this.marker);
     };
-    
- 
     
     ko.bindingHandlers.leafletMap = {
         init: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
             var center = valueAccessor(),
                 zoom = allBindings.get('zoom') || 10,
-                markers = allBindings.get('markers');
+                markers = allBindings.get('markers'),
+                eventHandlers = []; // array of objects: target, eventName, handler
     
             var mapCenter = ko.computed({
                 read: function() {
@@ -92,7 +94,8 @@
                     map.setView(ko.unwrap(mapCenter));
                 })
             ];
-            map.on('dragend', function() {
+            map.on('dragend', function(evt) {
+                eventHandlers.push({target: evt.target, eventName: evt.type, handler: arguments.callee});
                 mapCenter(map.getCenter());
             });
     
@@ -102,7 +105,10 @@
                     map.setZoom(ko.unwrap(zoom));
                 });
                 subscriptions.push(subsc);
-                map.on('zoomend', function () { zoom(map.getZoom()); });
+                map.on('zoomend', function (evt) {
+                    eventHandlers.push({target: evt.target, eventName: evt.type, handler: arguments.callee}); 
+                    zoom(map.getZoom()); 
+                });
             }
     
             var markersList = [];
@@ -124,12 +130,12 @@
             subscriptions.push(subscr);
     
             ko.utils.domNodeDisposal.addDisposeCallback(element, function() {
-                // TODO: dispose all subscriptions & events.
+                // dispose all subscriptions & events.
+                each (eventHandlers, function (eh) {  eh.target.removeEventListener(eh.eventName, eh.handler); });
                 each(markersList, function (m) { m.dispose();  });
                 each(subscriptions, function (subscription) { subscription.dispose(); });
             });
     
-            
         }
     };
     
