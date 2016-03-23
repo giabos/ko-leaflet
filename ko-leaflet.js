@@ -121,8 +121,12 @@
                         markersList[c.index] = new Marker(c.value, map);
                     }
                     if (c.status === "deleted") {
-                        markersList[c.index].dispose();
+                        var m = markersList[c.index];
+                        if (m) {
+                            m.dispose();
+                        }
                         markersList.splice(c.index, 1);
+                        
                     }
                 });
     
