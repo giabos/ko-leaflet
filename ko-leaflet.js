@@ -121,12 +121,13 @@
                         markersList[c.index] = new Marker(c.value, map);
                     }
                     if (c.status === "deleted") {
-                        var m = markersList[c.index];
-                        if (m) {
-                            m.dispose();
-                        }
+                        markersList[c.index].dispose();
+                    }
+                });
+                // delete after that all have been disposed otherwise cannot be accessed anymore via 'index'.
+                each(changes.reverse(), function(c) {
+                    if (c.status === "deleted") {
                         markersList.splice(c.index, 1);
-                        
                     }
                 });
     
