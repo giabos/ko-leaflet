@@ -72,6 +72,7 @@
             var center = valueAccessor(),
                 zoom = allBindings.get('zoom') || 10,
                 markers = allBindings.get('markers'),
+                invalidateSize = allBindings.get('invalidateSize'),
                 eventHandlers = []; // array of objects: target, eventName, handler
     
             var mapCenter = ko.computed({
@@ -83,6 +84,9 @@
                     center[1](newCenter.lng);
                 }
             }, null, { disposeWhenNodeIsRemoved: element });
+    
+    
+           
     
             var map = L.map(element).setView(ko.unwrap(mapCenter), ko.unwrap(zoom));
             L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
@@ -98,7 +102,13 @@
                 eventHandlers.push({target: evt.target, eventName: evt.type, handler: arguments.callee});
                 mapCenter(map.getCenter());
             });
-    
+
+            // triggers an 'invalidateSize' when detecting a change in an observable (cfr http://stackoverflow.com/questions/20400713/leaflet-map-not-showing-properly-in-bootstrap-3-0-modal)    
+            if (invalidateSize && ko.isObservable(invalidateSize)) {
+                subscriptions.push(invalidateSize.subscribe(function () {
+                    map.invalidateSize();
+                }));    
+            }
     
             if (ko.isObservable(zoom)) {
                 var subsc = zoom.subscribe(function() {
