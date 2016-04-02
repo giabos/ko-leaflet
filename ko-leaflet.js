@@ -2,15 +2,15 @@
 
 (function (ko, L) {
     //"use strict";
-    
+
     var each = ko.utils.arrayForEach;
-    
-    // 'm' contains following observables: center (array containing [lat, lng]), draggable, title, text
+
+    // 'm' contains following observables: center (array containing [lat, lng]), draggable, title, text, opened (popup)
     var Marker = function(m, map) {
         var self = this;
-        
+
         self.eventHandlers = []; // array of objects: target, eventName, handler
-        
+
         self.centerM = ko.computed({
             read: function() {
                 return [ko.unwrap(m.center[0]), ko.unwrap(m.center[1])];
@@ -20,10 +20,11 @@
                 m.center[1](center.lng);
             }
         });
-        
+
         var title = ko.isObservable(m.title) ? m.title : ko.observable(m.title);
         var text = ko.isObservable(m.text) ? m.text : ko.observable(m.text);
-        
+
+
         // Create marker in leaflet.
         self.marker = L.marker(ko.unwrap(self.centerM), {
             title: ko.unwrap(title || '----'),
@@ -32,7 +33,7 @@
         });
         self.marker.addTo(map);
         self.marker.bindPopup(ko.unwrap(text));
-        var popup = self.marker.getPopup()        
+        var popup = self.marker.getPopup()
 
         if (ko.unwrap(m.draggable || false)) {
             self.marker.on('dragend', function(evt) {
@@ -40,7 +41,7 @@
                 self.centerM(self.marker.getLatLng());
             });
         }
-        
+
         self.subscriptions = [
             self.centerM.subscribe(function() {
                 self.marker.setLatLng(ko.unwrap(self.centerM));
@@ -53,20 +54,33 @@
             })
         ];
         self.subscriptions.push(self.centerM);
-        
-        //marker.setIcon(L.divIcon({className: 'icon'}));        
 
-        
+        if (m.opened && ko.isObservable(m.opened)) {
+            self.subscriptions.push(m.opened.subscribe(function (o) {
+                if (o) {
+                    self.marker.openPopup();
+                } else {
+                    self.marker.closePopup();
+                }
+            }));
+            self.marker.on('popupclose', function(evt) { m.opened(false); });
+        }
+
+
+
+        //marker.setIcon(L.divIcon({className: 'icon'}));
+
+
         this.map = map;
-    };    
-    
+    };
+
     Marker.prototype.dispose = function () {
         // remove all events & subscriptions.
         each (this.eventHandlers, function (eh) {  eh.target.removeEventListener(eh.eventName, eh.handler); });
         each(this.subscriptions, function (subscription) { subscription.dispose(); });
         this.map.removeLayer(this.marker);
     };
-    
+
     ko.bindingHandlers.leafletMap = {
         init: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
             var center = valueAccessor(),
@@ -74,7 +88,7 @@
                 markers = allBindings.get('markers'),
                 invalidateSize = allBindings.get('invalidateSize'),
                 eventHandlers = []; // array of objects: target, eventName, handler
-    
+
             var mapCenter = ko.computed({
                 read: function() {
                     return [ko.unwrap(center[0]), ko.unwrap(center[1])];
@@ -84,15 +98,15 @@
                     center[1](newCenter.lng);
                 }
             }, null, { disposeWhenNodeIsRemoved: element });
-    
-    
-           
-    
+
+
+
+
             var map = L.map(element).setView(ko.unwrap(mapCenter), ko.unwrap(zoom));
             L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
                 attribution: 'osm.org'
             }).addTo(map);
-    
+
             var subscriptions = [
                 mapCenter.subscribe(function() {
                     map.setView(ko.unwrap(mapCenter));
@@ -103,27 +117,27 @@
                 mapCenter(map.getCenter());
             });
 
-            // triggers an 'invalidateSize' when detecting a change in an observable (cfr http://stackoverflow.com/questions/20400713/leaflet-map-not-showing-properly-in-bootstrap-3-0-modal)    
+            // triggers an 'invalidateSize' when detecting a change in an observable (cfr http://stackoverflow.com/questions/20400713/leaflet-map-not-showing-properly-in-bootstrap-3-0-modal)
             if (invalidateSize && ko.isObservable(invalidateSize)) {
                 subscriptions.push(invalidateSize.subscribe(function () {
                     map.invalidateSize();
-                }));    
+                }));
             }
-    
+
             if (ko.isObservable(zoom)) {
                 var subsc = zoom.subscribe(function() {
                     map.setZoom(ko.unwrap(zoom));
                 });
                 subscriptions.push(subsc);
                 map.on('zoomend', function (evt) {
-                    eventHandlers.push({target: evt.target, eventName: evt.type, handler: arguments.callee}); 
-                    zoom(map.getZoom()); 
+                    eventHandlers.push({target: evt.target, eventName: evt.type, handler: arguments.callee});
+                    zoom(map.getZoom());
                 });
             }
-    
+
             var markersList = [];
             each(ko.unwrap(markers), function (m, idx) { markersList.push(new Marker(m, map));  });
-    
+
             // http://stackoverflow.com/questions/14149551/subscribe-to-observable-array-for-new-or-removed-entry-only
             var subscr = markers.subscribe(function(changes) {
                 each(changes, function(c) {
@@ -140,22 +154,18 @@
                         markersList.splice(c.index, 1);
                     }
                 });
-    
+
             }, this, "arrayChange");
             subscriptions.push(subscr);
-    
+
             ko.utils.domNodeDisposal.addDisposeCallback(element, function() {
                 // dispose all subscriptions & events.
                 each (eventHandlers, function (eh) {  eh.target.removeEventListener(eh.eventName, eh.handler); });
                 each(markersList, function (m) { m.dispose();  });
                 each(subscriptions, function (subscription) { subscription.dispose(); });
             });
-    
+
         }
     };
-    
-}) (ko, L); 
 
-
-
-    
+}) (ko, L);

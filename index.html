@@ -5,20 +5,20 @@
         <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css">
         <script src="//cdnjs.cloudflare.com/ajax/libs/knockout/3.3.0/knockout-min.js"></script>
         <script src="//rawgithub.com/jseppi/Leaflet.MakiMarkers/master/Leaflet.MakiMarkers.js"></script>
-        
-        <style> 
+
+        <style>
             .map {
                 height:600px;
                 width: 100%;
                 border: 2px solid orange;
             }
-            
+
             .icon {
                 background-color: red;
             }
         </style>
-            
-        
+
+
     </head>
     <body>
         <h2>map features</h2>
@@ -39,6 +39,7 @@
                 <input data-bind="value: center[1]" size="5">
                 <label>title</label>
                 <input data-bind="value: text" size="5">
+                <label>open</label><input type="checkbox" data-bind="checked: opened">
                 <button data-bind="click: function() { $parent.removeMarker($index()) }">delete</button>
             </li>
         </ul>
@@ -48,4 +49,3 @@
         <script src="test-app.js"></script>
   </body>
 </html>
-
