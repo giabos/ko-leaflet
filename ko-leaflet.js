@@ -29,7 +29,7 @@
         self.marker = L.marker(ko.unwrap(self.centerM), {
             title: ko.unwrap(title || '----'),
             draggable: ko.unwrap(m.draggable || false),
-            opacity: m.opacity || 1.0
+            opacity: ko.unwrap(m.opacity || 1.0)
         });
         self.marker.addTo(map);
         self.marker.bindPopup(ko.unwrap(text));
@@ -66,7 +66,11 @@
             self.marker.on('popupclose', function(evt) { m.opened(false); });
         }
 
-
+        if (m.opacity && ko.isObservable(m.opacity)) {
+            self.subscriptions.push(m.opacity.subscribe(function(o) {
+                self.marker.setOpacity(o);
+            }));    
+        }
 
         //marker.setIcon(L.divIcon({className: 'icon'}));
 
