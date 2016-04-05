@@ -3,9 +3,26 @@
 (function (ko, L) {
     //"use strict";
 
+    /**
+    *       cfr https://github.com/pointhi/leaflet-color-markers
+    *   Possible colors: blue, red, green, orange, yellow, violet, grey, black
+    */
+    function coloredMarkerIcon(color) {
+        return new L.Icon({
+              iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-' + color + '.png',
+              shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/images/marker-shadow.png',
+              iconSize: [25, 41],
+              iconAnchor: [12, 41],
+              popupAnchor: [1, -34],
+              shadowSize: [41, 41]
+            });
+    }
+
+
+
     var each = ko.utils.arrayForEach;
 
-    // 'm' contains following observables: center (array containing [lat, lng]), draggable, title, text, opened (popup)
+    // 'm' contains following observables: center (array containing [lat, lng]), draggable, title, text, opened (popup), color (see above)
     var Marker = function(m, map) {
         var self = this;
 
@@ -25,12 +42,18 @@
         var text = ko.isObservable(m.text) ? m.text : ko.observable(m.text);
 
 
-        // Create marker in leaflet.
-        self.marker = L.marker(ko.unwrap(self.centerM), {
+        var markerOptions = {
             title: ko.unwrap(title || '----'),
             draggable: ko.unwrap(m.draggable || false),
             opacity: ko.unwrap(m.opacity || 1.0)
-        });
+        };
+
+        if (m.color) {
+            markerOptions.icon = coloredMarkerIcon(m.color);
+        }
+
+        // Create marker in leaflet.
+        self.marker = L.marker(ko.unwrap(self.centerM), markerOptions);
         self.marker.addTo(map);
         self.marker.bindPopup(ko.unwrap(text));
         var popup = self.marker.getPopup()
@@ -69,7 +92,7 @@
         if (m.opacity && ko.isObservable(m.opacity)) {
             self.subscriptions.push(m.opacity.subscribe(function(o) {
                 self.marker.setOpacity(o);
-            }));    
+            }));
         }
 
         //marker.setIcon(L.divIcon({className: 'icon'}));

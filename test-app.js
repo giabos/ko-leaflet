@@ -13,7 +13,7 @@ ko.applyBindings({
             center: [ko.observable(50.81), ko.observable(4.93)],
             text: ko.observable("new"),
             draggable: true,
-            color: 'red',
+            color: 'green',
             opened: ko.observable(false)
         });
     },
