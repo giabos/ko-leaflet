@@ -172,7 +172,10 @@
                         markersList[c.index] = new Marker(c.value, map);
                     }
                     if (c.status === "deleted") {
-                        markersList[c.index].dispose();
+                        // sometimes we receive a delete status although the markersList is empty.
+                        if (markersList.length > 0) {
+                            markersList[c.index].dispose();
+                        }
                     }
                 });
                 // delete after that all have been disposed otherwise cannot be accessed anymore via 'index'.
