@@ -173,7 +173,7 @@
                     }
                     if (c.status === "deleted") {
                         // sometimes we receive a delete status although the markersList is empty.
-                        if (markersList.length > 0) {
+                        if (c.index < markersList.length) {
                             markersList[c.index].dispose();
                         }
                     }
